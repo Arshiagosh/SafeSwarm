@@ -1,16 +1,13 @@
 classdef DynamicObstacle < handle
     %% DynamicObstacle — a circular obstacle that moves and bounces off boundaries
     %
-    % Call update(dt) each simulation step to advance the obstacle, then use
-    % to_struct() to insert it into env.obstacles for collision checking.
+    % Register it with env.add_dynamic_obstacle(obs); SimEngine then calls
+    % update(dt) every step and keeps its circle in env.obstacles.
     %
     % Example:
     %   obs = DynamicObstacle([0; 0], 3, [1; 0.5], [-50 50; -50 50]);
-    %   for step = 1:n_steps
-    %       obs.update(dt);
-    %       env.obstacles{end} = obs.to_struct();
-    %       sim.run_step();
-    %   end
+    %   env.add_dynamic_obstacle(obs);
+    %   sim.run();
 
     properties
         center    % [x; y] current centre position
@@ -49,7 +46,8 @@ classdef DynamicObstacle < handle
         function obs_struct = to_struct(obj)
             % to_struct() — returns an obstacle struct compatible with Environment
             obs_struct.type   = 'circle';
-            obs_struct.center = obj.center;
+            obs_struct.center   = obj.center;
+            obs_struct.velocity = obj.velocity;
             obs_struct.radius = obj.radius;
         end
     end

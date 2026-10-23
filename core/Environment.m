@@ -16,6 +16,8 @@ classdef Environment < handle
         y_lim       % [ymin, ymax] world boundary in y
         obstacles   % cell array of obstacle structs
         goal        % optional [x; y] goal position
+        dynamic_obstacles = {};   % DynamicObstacle objects, moved by SimEngine each step
+        dynamic_index     = [];   % their positions in obstacles{}
     end
 
     methods
@@ -47,6 +49,40 @@ classdef Environment < handle
             obs.x_range = x_range;
             obs.y_range = y_range;
             obj.obstacles{end+1} = obs;
+        end
+
+        function add_dynamic_obstacle(obj, dyn_obs)
+            % add_dynamic_obstacle(dyn_obs) — register a DynamicObstacle
+            %   SimEngine moves it every step and keeps its circle in obstacles{}.
+            obj.obstacles{end+1}         = dyn_obs.to_struct();
+            obj.dynamic_obstacles{end+1} = dyn_obs;
+            obj.dynamic_index(end+1)     = numel(obj.obstacles);
+        end
+
+        function update_dynamic_obstacles(obj, dt)
+            % update_dynamic_obstacles(dt) — move every dynamic obstacle by dt
+            for k = 1:numel(obj.dynamic_obstacles)
+                obj.dynamic_obstacles{k}.update(dt);
+                obj.obstacles{obj.dynamic_index(k)} = obj.dynamic_obstacles{k}.to_struct();
+            end
+        end
+
+        function d = obstacle_distances(obj, P)
+            % obstacle_distances(P) — distance from each point to each obstacle surface
+            %   P : 2×N positions. Returns K×N (K obstacles); negative inside a circle,
+            %   zero inside a rectangle. Empty when there are no obstacles.
+            K = numel(obj.obstacles);
+            d = zeros(K, size(P, 2));
+            for k = 1:K
+                obs = obj.obstacles{k};
+                if strcmp(obs.type, 'circle')
+                    d(k, :) = vecnorm(P - obs.center(:)) - obs.radius;
+                else
+                    cx = min(max(P(1,:), obs.x_range(1)), obs.x_range(2));
+                    cy = min(max(P(2,:), obs.y_range(1)), obs.y_range(2));
+                    d(k, :) = vecnorm(P - [cx; cy]);
+                end
+            end
         end
 
         function result = in_collision(obj, position)

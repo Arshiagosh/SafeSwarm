@@ -22,6 +22,8 @@ classdef Swarm < handle
         comm_radius  = 10.0;    % communication range (metres), used by 'metric' topology
         topology     = 'metric';% 'metric' | 'knn' | 'full'
         k_neighbours = 6;       % neighbours per agent, used by 'knn' topology
+        agent_radius = 0;       % physical radius of every agent (metres); used by safety metrics
+        time         = 0;       % current simulation time, set by SimEngine each step
         adjacency_cache = [];   % cached N×N adjacency matrix
         cache_valid     = false;% flag: cache matches current positions
     end
@@ -84,6 +86,11 @@ classdef Swarm < handle
             for i = 1:obj.N
                 velocities(:, i) = obj.agents{i}.velocity;
             end
+        end
+
+        function S = get_states(obj)
+            % get_states() — returns state_dim×N matrix (all agents must share a state size)
+            S = cell2mat(cellfun(@(a) a.state, obj.agents, 'UniformOutput', false));
         end
 
         function A = get_adjacency(obj)

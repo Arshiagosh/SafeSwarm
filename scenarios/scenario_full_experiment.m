@@ -60,7 +60,7 @@ sim.logger     = logger;
 sim.run();
 
 %% Analysis  (results dir resolved relative to the project, not the cwd)
-results_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'results');
+results_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'out');
 if ~exist(results_dir, 'dir'); mkdir(results_dir); end
 
 MetricsAnalyzer.print_summary(logger);
