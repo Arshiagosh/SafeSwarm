@@ -17,6 +17,7 @@ classdef Agent < handle
         state       % state column vector (format depends on dynamics)
         dynamics    % dynamics model object (SingleIntegrator | DoubleIntegrator | Unicycle)
         color       % RGB triplet used by SwarmVisualizer
+        saturation_count = 0;   % steps in which the command was outside the input bounds
     end
 
     properties (Dependent)
@@ -40,6 +41,10 @@ classdef Agent < handle
             % step(u, dt) — advance agent state by one timestep
             %   u  : control input column vector (format matches dynamics)
             %   dt : timestep in seconds
+            %   The command is saturated by the dynamics model; steps where
+            %   saturation changed the command are counted.
+            [~, sat] = obj.dynamics.saturate(u);
+            obj.saturation_count = obj.saturation_count + sat;
             obj.state = obj.dynamics.step(obj.state, u, dt);
         end
 
