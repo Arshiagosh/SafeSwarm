@@ -1,0 +1,18 @@
+# MATLAB
+*.asv
+*.m~
+*.mex*
+slprj/
+*.slxc
+*.mat
+
+# Scratch output (figures/ and results.json are tracked on purpose)
+out/
+*.fig
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
