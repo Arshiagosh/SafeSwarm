@@ -9,6 +9,11 @@ classdef VirtualStructure < handle
     % was advanced by a hard-coded 0.05 s per call, which was only right when
     % dt = 0.05; here it is correct for any dt.
     %
+    % For DoubleIntegrator agents the command is an acceleration, so a
+    % velocity-damping term k_damping (v_ref - v_i) replaces the velocity
+    % feedforward. Without it (the SwarmSim law) the agents oscillate about
+    % their slots.
+    %
     % Works with: DoubleIntegrator
     % Use case:   coordinated rigid formations (V-shape, line, wedge)
     %
@@ -24,6 +29,7 @@ classdef VirtualStructure < handle
         k_consensus  = 1.0;        % consensus (centre alignment) gain
         virtual_center              % [x; y] virtual body centre at t = 0
         virtual_velocity = [0; 0]; % [vx; vy] virtual body velocity (m/s)
+        k_damping    = 2.0;        % velocity damping gain (DoubleIntegrator only)
         max_accel    = 3.0;        % control saturation (m/s²)
     end
 
@@ -64,9 +70,12 @@ classdef VirtualStructure < handle
                 desired_pos = c_t + desired_offset;
                 pos_error   = desired_pos - pos;
 
-                u(:,i) = obj.k_formation * pos_error + ...
-                         obj.k_consensus * center_error + ...
-                         obj.virtual_velocity;
+                u(:,i) = obj.k_formation * pos_error + obj.k_consensus * center_error;
+                if numel(agent.state) >= 4
+                    u(:,i) = u(:,i) + obj.k_damping * (obj.virtual_velocity(:) - agent.state(3:4));
+                else
+                    u(:,i) = u(:,i) + obj.virtual_velocity(:);
+                end
 
                 if norm(u(:,i)) > obj.max_accel
                     u(:,i) = u(:,i) / norm(u(:,i)) * obj.max_accel;

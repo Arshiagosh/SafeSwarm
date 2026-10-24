@@ -78,7 +78,10 @@ classdef PathFollowing < handle
             dists = vecnorm(obj.path - pos);
             [~, closest_idx] = min(dists);
 
-            for k = closest_idx:size(obj.path, 2)
+            % Search ahead of the closest waypoint only. SwarmSim started at the
+            % closest waypoint itself, which could be behind the robot and turn
+            % it around once it was lookahead_dist past that waypoint.
+            for k = closest_idx+1:size(obj.path, 2)
                 if norm(obj.path(:,k) - pos) >= obj.lookahead_dist
                     target = obj.path(:,k);
                     return;
