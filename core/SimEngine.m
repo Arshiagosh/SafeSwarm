@@ -17,6 +17,12 @@ classdef SimEngine < handle
     %   'none'    — leave the state alone. Collisions stay visible in the
     %               logged metrics. Use this for every safety experiment.
     %
+    % control_period sets how often the behaviour is evaluated. Empty (the
+    % default) means every step. A larger value models a sampled-data
+    % controller: the command is held constant (zero-order hold) for
+    % control_period seconds while the dynamics keep integrating with dt.
+    % control_period should be a multiple of dt.
+    %
     % Optional components are attached after construction:
     %   sim.logger     = DataLogger();
     %   sim.visualizer = SwarmVisualizer(swarm, env);
@@ -36,7 +42,9 @@ classdef SimEngine < handle
         logger      % DataLogger object (optional)
         visualizer  % SwarmVisualizer object (optional)
         contact_mode = 'reflect';  % 'reflect' | 'none'
+        control_period = [];       % zero-order-hold period (s); empty = every step
         u_last      % control applied in the last step (control_dim×N)
+        t_control = -Inf;          % time the held command was computed
     end
 
     properties (Constant)
@@ -85,8 +93,12 @@ classdef SimEngine < handle
             obj.swarm.time = obj.t;
             obj.env.update_dynamic_obstacles(obj.dt);
 
-            u_all = obj.behaviour.compute_control(obj.swarm, obj.env);
-            obj.u_last = u_all;
+            if isempty(obj.control_period) || isempty(obj.u_last) || ...
+               obj.t - obj.t_control >= obj.control_period - 1e-9
+                obj.u_last    = obj.behaviour.compute_control(obj.swarm, obj.env);
+                obj.t_control = obj.t;
+            end
+            u_all = obj.u_last;
 
             for i = 1:obj.swarm.N
                 obj.swarm.agents{i}.step(u_all(:,i), obj.dt);
@@ -113,6 +125,8 @@ classdef SimEngine < handle
             % reset() — set simulation time back to zero
             obj.t = 0;
             obj.swarm.time = 0;
+            obj.u_last    = [];
+            obj.t_control = -Inf;
         end
     end
 
