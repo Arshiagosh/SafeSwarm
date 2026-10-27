@@ -243,7 +243,12 @@ classdef SafetyFilter < handle
                             q  = [min(max(P(1,i), obs.x_range(1)), obs.x_range(2));
                                   min(max(P(2,i), obs.y_range(1)), obs.y_range(2))];
                             Dk = R;
-                            vq = [0; 0];
+                            % Beside a face the closest point slides with the
+                            % agent along that face, so it shares the tangential
+                            % velocity; at a corner it is fixed.
+                            beside = [P(1,i) > obs.x_range(1) && P(1,i) < obs.x_range(2);
+                                      P(2,i) > obs.y_range(1) && P(2,i) < obs.y_range(2)];
+                            vq = V(:, i) .* beside;
                         end
                         dp = P(:, i) - q;
                         if norm(dp) - Dk > obj.sensing_radius, continue; end

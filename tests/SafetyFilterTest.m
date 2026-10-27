@@ -76,6 +76,18 @@ classdef SafetyFilterTest < matlab.unittest.TestCase
             tc.verifyEqual(s.obstacle_collisions, 0);
         end
 
+        function doubleIntegratorAlongWall(tc)
+            % A double integrator pushed diagonally into a wall must slide along it.
+            % (Regression: the closest point on a rectangle moves with the agent.)
+            swarm = Swarm({Agent(1, [-4; 2; 0; 0], DoubleIntegrator(1, 1))}, 10, 'full');
+            swarm.agent_radius = 0.3;
+            env = Environment([-6 6], [-6 6]);
+            env.add_rectangular_obstacle([-1 1], [-6 1]);
+            f   = SafetyFilter(GoToGoal([4; -2]), 'Mode', 'decentralised');
+            sim = SafetyFilterTest.simulate(swarm, env, f, 15);
+            tc.verifyGreaterThanOrEqual(sim.logger.summary().min_clearance, -1e-3);
+        end
+
         function unicycleLookaheadStaysApart(tc)
             a1 = Agent(1, [-3; 0.05; 0],  Unicycle(1, 2));
             a2 = Agent(2, [ 3; 0;    pi], Unicycle(1, 2));
