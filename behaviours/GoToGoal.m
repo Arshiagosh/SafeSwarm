@@ -8,6 +8,10 @@ classdef GoToGoal < handle
     %                     e_i = heading error to the goal
     % Agents ignore each other, so collisions are expected without a filter.
     %
+    % Optional via points: agent i first heads for via(:, i) and switches to
+    % its goal once within via_tol of it (NaN columns mean no via point).
+    % A crude stand-in for a planner, used to send agents through a gap.
+    %
     % Works with: SingleIntegrator, DoubleIntegrator, Unicycle
     %
     % Example:
@@ -19,6 +23,9 @@ classdef GoToGoal < handle
         k_p = 1.0;      % position gain
         k_d = 2.0;      % velocity damping (DoubleIntegrator)
         k_w = 2.0;      % heading gain (Unicycle)
+        via     = [];   % 2×N via points (NaN = none); empty = no via points
+        via_tol = 0.5;  % distance at which a via point counts as passed (m)
+        passed  = [];   % 1×N logical, via point already passed
     end
 
     methods
@@ -33,7 +40,14 @@ classdef GoToGoal < handle
         function u = compute_control(obj, swarm, ~)
             % compute_control(swarm, env) — returns 2×N control matrix
             S = swarm.get_states();
-            E = obj.goals - S(1:2, :);
+            T = obj.goals;
+            if ~isempty(obj.via)
+                if isempty(obj.passed), obj.passed = isnan(obj.via(1, :)); end
+                near = vecnorm(S(1:2, :) - obj.via) <= obj.via_tol;
+                obj.passed = obj.passed | near;
+                T(:, ~obj.passed) = obj.via(:, ~obj.passed);
+            end
+            E = T - S(1:2, :);
             switch size(S, 1)
                 case 2
                     u = obj.k_p * E;
