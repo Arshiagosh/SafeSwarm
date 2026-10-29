@@ -44,6 +44,11 @@ classdef SafetyFilter < handle
     % step is counted in n_infeasible and the largest slack is logged. The
     % filter never falls back to the nominal command silently.
     %
+    % Communication: by default every robot knows every other robot's exact
+    % state. In 'decentralised' mode a CommChannel can be attached (property
+    % comm); each robot then builds its constraints from the states it has
+    % actually received (dropped and delayed messages make them stale).
+    %
     % Requires the Optimization Toolbox (quadprog).
     %
     % Example:
@@ -65,6 +70,7 @@ classdef SafetyFilter < handle
         avoid_obstacles = true;
         slack_weight = 1e4;     % weight of the slack when the QP is infeasible
         right_hand_bias = 0;    % deadlock heuristic gain (0 = off), point-mass agents only
+        comm = [];              % CommChannel used in decentralised mode (empty = perfect)
 
         % Statistics, appended once per call
         n_calls      = 0;
@@ -141,7 +147,15 @@ classdef SafetyFilter < handle
             else
                 u = zeros(m, n);
                 slack = 0;
+                if ~isempty(obj.comm)
+                    S_true = swarm.get_states();
+                    obj.comm.update(S_true);
+                end
                 for i = 1:n
+                    if ~isempty(obj.comm)
+                        % Robot i's constraints from what it has received
+                        rows = obj.constraints(swarm, env, obj.comm.view(i, S_true));
+                    end
                     % Rows that involve agent i: its own share of each pair
                     % constraint (half of b) and the full obstacle rows.
                     own = rows.i == i;
@@ -183,10 +197,11 @@ classdef SafetyFilter < handle
     end
 
     methods (Access = private)
-        function [rows, kind] = constraints(obj, swarm, env)
+        function [rows, kind] = constraints(obj, swarm, env, S)
             % Build all CBF rows. Row r reads ai*u_i + aj*u_j <= b, with j = 0
             % for rows that involve only agent i (obstacles, speed).
-            S    = swarm.get_states();
+            % S overrides the states (a robot's own view); default: true states.
+            if nargin < 4, S = swarm.get_states(); end
             n    = swarm.N;
             kind = size(S, 1);              % 2 = SI, 3 = unicycle, 4 = DI
             D    = obj.safe_distance(swarm);
