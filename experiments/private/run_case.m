@@ -1,13 +1,20 @@
-function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz)
-    % run_case(sc, controller, t_max, dt, control_period, viz) — run one benchmark case
+function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opts)
+    % run_case(sc, controller, t_max, dt, control_period, viz, opts) — run one benchmark case
     %   sc         : scene from make_scene
     %   controller : 'nominal' | 'potential' | 'cbf_central' | 'cbf_decentral'
     %                | 'cbf_decentral_rhb' (decentralised + right-hand bias)
     %   control_period : zero-order-hold period (empty = every step)
     %   viz        : optional SwarmVisualizer
+    %   opts       : optional struct with any of
+    %                  noise_p, noise_v — sensor noise std (position, velocity)
+    %                  loss, delay      — packet loss and delay (steps) for the
+    %                                     decentralised filter's CommChannel
+    %                  faults           — struct array for FaultInjector
     % Returns a struct of scalar metrics and the finished SimEngine.
     if nargin < 5, control_period = []; end
     if nargin < 6, viz = []; end
+    if nargin < 7, opts = struct(); end
+    opts = fill_defaults(opts);
 
     nominal = GoToGoal(sc.goals, 1.0);
     nominal.via = sc.via;
@@ -32,6 +39,18 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz)
             error('run_case:Controller', 'Unknown controller %s', controller);
     end
     if ~isempty(filt), behav = filt; end
+    comm = [];
+    if ~isempty(filt) && strcmp(filt.mode, 'decentralised') && (opts.loss > 0 || opts.delay > 0 || ...
+       any(strcmp({opts.faults.mode}, 'silent')))
+        comm = CommChannel(Inf, opts.loss, opts.delay);
+        filt.comm = comm;
+    end
+    if ~isempty(opts.faults)
+        behav = FaultInjector(behav, opts.faults, comm);
+    end
+    if opts.noise_p > 0 || opts.noise_v > 0
+        behav = NoisyObservation(behav, opts.noise_p, opts.noise_v);
+    end
 
     sim = SimEngine(sc.swarm, sc.env, behav, dt, t_max);
     sim.contact_mode   = 'none';
@@ -73,5 +92,13 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz)
         r.max_slack     = max([filt.log_slack 0]);
         r.mean_solve_ms = 1000 * mean(filt.log_solve);
         r.safe_distance = filt.safe_distance(sc.swarm);
+    end
+end
+
+function o = fill_defaults(o)
+    d = struct('noise_p', 0, 'noise_v', 0, 'loss', 0, 'delay', 0, ...
+               'faults', struct('agent', {}, 'mode', {}, 't_start', {}));
+    for f = fieldnames(d)'
+        if ~isfield(o, f{1}), o.(f{1}) = d.(f{1}); end
     end
 end
