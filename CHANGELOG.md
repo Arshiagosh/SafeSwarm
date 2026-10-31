@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (M3: uncertainty)
+
+- CommChannel: per-link packet loss, delay in control steps, silent robots; each robot keeps the
+  last state it received. The decentralised SafetyFilter uses it through its `comm` property.
+- uncertainty/: NoisyObservation (sensor noise seen by the controllers only), FaultInjector
+  (freeze, random walk, silent), MonteCarloRunner (seeded batches, Wilson intervals).
+- Experiment E3 (noise, lossy and delayed messages, faulty robot); 40 unit tests.
+
 ## Unreleased (MVP: core and safety filters)
 
 - Started from SwarmSim's core (dynamics, swarm, engine, behaviours, planners, tools).

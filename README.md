@@ -11,7 +11,7 @@
 <p align="center">
   <img alt="MATLAB" src="https://img.shields.io/badge/MATLAB-R2023b-0076A8">
   <img alt="Optimization Toolbox" src="https://img.shields.io/badge/needs-Optimization%20Toolbox-orange">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-31%20passing-brightgreen">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-40%20passing-brightgreen">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -117,6 +117,45 @@ T seconds (dynamics integrated at 2 ms) and changing nothing else:
 So the certificate depends on the sampling period and nothing in a standard CBF-QP filter
 accounts for it. My MSc thesis works on exactly this; that part is not in this repository yet.
 
+### E3: noise, lossy messages and a faulty robot (Monte Carlo)
+
+Each setting below is 10 seeded runs (`uncertainty/MonteCarloRunner.m`); "contact rate" is the
+share of runs in which two robots overlapped at least once, with a 95 % Wilson interval in the
+figures. Ten runs per point is enough to see trends, not to pin down small rates.
+
+<p align="center">
+  <img src="figures/e3_noise.png" width="100%" alt="Contact rate and closest approach against sensor noise">
+</p>
+
+**Sensor noise** (`e3a_noise.m`, swap scene). Every controller sees positions, and velocities for
+the double integrator, with Gaussian noise of std σ, and the 5 cm margin is left as it is. At
+σ = 0.02 no run made contact. At σ = 0.1 the centralised filter made contact in 10 of 10 runs (SI)
+and 9 of 10 (DI), and the decentralised filter in 7 of 10 (DI). The single-integrator decentralised
+filter with the right-hand bias was the exception: 1 contact in 10 runs at both σ = 0.1 and 0.2.
+Only the 5 cm margin stands between a noisy measurement and contact, and it was not sized for
+noise.
+
+<p align="center">
+  <img src="figures/e3_comm.png" width="100%" alt="Contact rate and closest approach against packet loss">
+</p>
+
+**Lossy, delayed messages** (`e3b_comm.m`, swap scene, decentralised filter). Each robot builds
+its constraints from the last state it received from each neighbour. Without delay, losing up to
+half of the messages caused no contact; at 75 % loss, 5 of 10 (SI) and 4 of 10 (DI) runs made
+contact, and at 90 %, 10 and 9 of 10. A delay of 5 control steps (0.25 s) hurt even with no loss at
+all: every single-integrator run and 3 of 10 double-integrator runs made contact.
+
+<p align="center">
+  <img src="figures/e3_faults.png" width="100%" alt="Contact rate per fault type">
+</p>
+
+**One faulty robot** (`e3c_faults.m`, crossing scene, fault on robot 1 from t = 3 s). A frozen
+robot was avoided in every run, and so was a silent one (still driving, no messages). A robot that
+wanders at full speed and ignores its filter led to contact in 3 of 10 runs for the double
+integrator with either filter, and in none for the single integrator. In every fault case the
+seven healthy robots reached their goals, except with the wandering robot under the decentralised
+double-integrator filter (6.8 of 7 on average).
+
 ## Running it
 
 MATLAB R2023b (older releases will probably work but are untested). The core needs base MATLAB;
@@ -126,9 +165,12 @@ MATLAB R2023b (older releases will probably work but are untested). The core nee
 cd SafeSwarm
 startup                                  % adds everything to the path
 run('scenarios/scenario_swap_cbf.m')     % swap with and without the filter, prints the closest approach
-run('tests/run_tests.m')                 % 31 unit tests
+run('tests/run_tests.m')                 % 40 unit tests
 run('experiments/e1_benchmarks.m')       % E1 table, figures and swap GIF (a few minutes)
 run('experiments/e2_sampled_sweep.m')    % E2 sweep (takes longer: 2 ms steps)
+run('experiments/e3a_noise.m')           % E3 Monte Carlo sweeps (each takes a while)
+run('experiments/e3b_comm.m')
+run('experiments/e3c_faults.m')
 ```
 
 A filter around your own behaviour:
@@ -145,6 +187,15 @@ sim.logger.summary()                                     % closest approach, col
 safe.n_infeasible                                        % steps where the QP needed slack
 ```
 
+Uncertainty wraps around the same stack:
+
+```matlab
+safe.comm = CommChannel(Inf, 0.3, 2);                    % 30 % packet loss, 2-step delay (decentralised)
+behav = FaultInjector(safe, struct('agent', 1, 'mode', 'freeze', 't_start', 3));
+behav = NoisyObservation(behav, 0.05, 0.05);             % position / velocity noise std
+rows  = MonteCarloRunner.run(@(seed) my_case(seed), 1:20);
+```
+
 The SwarmSim scenarios (`scenarios/scenario_*.m`) still run unchanged:
 `run('tests/run_all_scenarios.m')`.
 
@@ -156,10 +207,11 @@ core/           Agent, Swarm, Environment, DynamicObstacle, CommChannel, SimEngi
 behaviours/     SwarmSim behaviours + DisplacementFormation, GoToGoal, FunctionBehaviour
 planners/       AStar, RRT, PotentialField
 safety/         SafetyFilter (CBF-QP, centralised and decentralised)
+uncertainty/    NoisyObservation, FaultInjector, MonteCarloRunner
 tools/          MetricsAnalyzer, ExperimentRunner, ParamSweep, PublicationPlot
 visualization/  SwarmVisualizer (with GIF export)
 scenarios/      runnable examples
-experiments/    E1 and E2; each writes figures/ and results.json
+experiments/    E1 to E3; each writes figures/ and results.json
 tests/          matlab.unittest suites, run_tests.m, run_all_scenarios.m
 docs/           SAFETY.md
 ```
@@ -180,11 +232,11 @@ Besides the new parts above, porting the core turned up a few things that are fi
 
 - Deadlock and infeasibility are reported, not solved.
 - Barriers on rectangles use the closest point, which is not smooth at corners.
-- The swap and crossing scenes are small (6 to 8 robots) and the results are single seeded runs,
-  not Monte Carlo averages.
+- The scenes are small (6 to 8 robots). E1 and E2 are single seeded runs; E3 uses 10 seeds per
+  setting, which shows trends but gives wide intervals.
+- The noise and delay results use the filter as it is; nothing in it accounts for noise or delay.
 
-Next on the list: sensor noise, packet drop, latency and faults with a Monte Carlo runner; a
-nonlinear MPC planner and a learned residual model compared with the filter; a ROS 2 bridge; then
+Next on the list: a nonlinear MPC planner and a learned residual model compared with the filter; a ROS 2 bridge; then
 a Python port in `python/`.
 
 ## References
