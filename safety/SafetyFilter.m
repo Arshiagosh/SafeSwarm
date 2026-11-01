@@ -49,6 +49,13 @@ classdef SafetyFilter < handle
     % comm); each robot then builds its constraints from the states it has
     % actually received (dropped and delayed messages make them stale).
     %
+    % Unknown disturbance: if the robots are pushed by an unknown d(p) that
+    % enters like the input, set residual to a model with
+    % [mu, sd] = residual.predict(P) (e.g. GPResidual). Each CBF row then
+    % adds the predicted effect 2 dp'(mu_i - mu_j) and subtracts the margin
+    % 2 ||dp|| kappa (||sd_i|| + ||sd_j||). kappa = 0 uses the mean only.
+    % Point-mass agents only.
+    %
     % Requires the Optimization Toolbox (quadprog).
     %
     % Example:
@@ -71,6 +78,8 @@ classdef SafetyFilter < handle
         slack_weight = 1e4;     % weight of the slack when the QP is infeasible
         right_hand_bias = 0;    % deadlock heuristic gain (0 = off), point-mass agents only
         comm = [];              % CommChannel used in decentralised mode (empty = perfect)
+        residual = [];          % disturbance model with [mu, sd] = predict(P); empty = none
+        kappa    = 2;           % how many standard deviations the margin covers
 
         % Statistics, appended once per call
         n_calls      = 0;
@@ -225,6 +234,12 @@ classdef SafetyFilter < handle
                 R = R + l;
             end
 
+            MU = zeros(2, n); SD = zeros(2, n);
+            if ~isempty(obj.residual) && kind ~= 3
+                [MU, SD] = obj.residual.predict(P);
+            end
+            sdn = vecnorm(SD);
+
             ai = zeros(0, 2); aj = zeros(0, 2); b = zeros(0, 1);
             I  = zeros(0, 1); J  = zeros(0, 1);
 
@@ -235,6 +250,7 @@ classdef SafetyFilter < handle
                     if norm(dp) > obj.sensing_radius, continue; end
                     dv = V(:, i) - V(:, j);
                     [g, bij] = obj.barrier_row(dp, dv, D, kind);
+                    bij = bij + 2*dp'*(MU(:,i) - MU(:,j)) - 2*norm(dp)*obj.kappa*(sdn(i) + sdn(j));
                     % g' (input_i - input_j) <= bij   (g = -2 dp)
                     ai(end+1, :) = g' * M(:, :, i);      %#ok<AGROW>
                     aj(end+1, :) = -g' * M(:, :, j);     %#ok<AGROW>
@@ -268,6 +284,7 @@ classdef SafetyFilter < handle
                         dp = P(:, i) - q;
                         if norm(dp) - Dk > obj.sensing_radius, continue; end
                         [g, bik] = obj.barrier_row(dp, V(:, i) - vq, Dk, kind);
+                        bik = bik + 2*dp'*MU(:,i) - 2*norm(dp)*obj.kappa*sdn(i);
                         ai(end+1, :) = g' * M(:, :, i);  %#ok<AGROW>
                         aj(end+1, :) = [0 0];            %#ok<AGROW>
                         b(end+1, 1)  = bik;              %#ok<AGROW>

@@ -12,6 +12,9 @@ classdef DoubleIntegrator < handle
     % safety filter that should respect it can be checked. Use
     % max_speed = Inf to switch the clip off.
     %
+    % disturbance: optional function handle d(p) -> 2×1, an unknown
+    % acceleration added to the (saturated) command inside step(). Empty = none.
+    %
     % Example:
     %   dyn   = DoubleIntegrator(3.0, 2.0);        % 3 m/s max, 2 m/s² max accel
     %   state = dyn.step([0;0;0;0], [1;0], 0.1);   % → [0.005; 0; 0.1; 0]
@@ -22,6 +25,7 @@ classdef DoubleIntegrator < handle
         state_dim   = 4;    % [x; y; vx; vy]
         control_dim = 2;    % [ax; ay]
         speed_clips = 0;    % number of steps in which the velocity was clipped
+        disturbance = [];   % optional @(p) -> 2×1 unknown acceleration added to u
     end
 
     methods
@@ -49,6 +53,9 @@ classdef DoubleIntegrator < handle
             %   u     : [ax; ay] acceleration command (saturated first)
             %   dt    : timestep in seconds
             u  = obj.saturate(u);
+            if ~isempty(obj.disturbance)
+                u = u + obj.disturbance(state(1:2));
+            end
             p  = state(1:2);
             v  = state(3:4);
             v1 = v + u * dt;

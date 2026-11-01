@@ -8,6 +8,10 @@ classdef SingleIntegrator < handle
     % f(x) = 0 and g(x) = I. Safety filters use f and g; the simulator uses
     % step(), which is the exact zero-order-hold solution.
     %
+    % disturbance: optional function handle d(p) -> 2×1, added to the
+    % (saturated) command inside step(). Controllers do not know it; it models
+    % wind, slope or any unmodelled drift. Empty = none.
+    %
     % Example:
     %   dyn   = SingleIntegrator(2.0);         % max 2 m/s
     %   state = dyn.step([0;0], [1;0.5], 0.1); % → [0.1; 0.05]
@@ -16,6 +20,7 @@ classdef SingleIntegrator < handle
         max_speed   = 1.0;  % input bound ||u|| <= max_speed (m/s)
         state_dim   = 2;    % [x; y]
         control_dim = 2;    % [vx; vy]
+        disturbance = [];   % optional @(p) -> 2×1 unknown drift added to u
     end
 
     methods
@@ -42,6 +47,9 @@ classdef SingleIntegrator < handle
             %   u     : [vx; vy] velocity command (saturated first)
             %   dt    : timestep in seconds
             u = obj.saturate(u);
+            if ~isempty(obj.disturbance)
+                u = u + obj.disturbance(state(1:2));
+            end
             new_state = state(:) + u * dt;
         end
 
