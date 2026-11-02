@@ -3,6 +3,7 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
     %   sc         : scene from make_scene
     %   controller : 'nominal' | 'potential' | 'cbf_central' | 'cbf_decentral'
     %                | 'cbf_decentral_rhb' (decentralised + right-hand bias)
+    %                | 'mpc' (distributed NMPC) | 'mpc_cbf' (NMPC + decentralised filter)
     %   control_period : zero-order-hold period (empty = every step)
     %   viz        : optional SwarmVisualizer
     %   opts       : optional struct with any of
@@ -10,6 +11,7 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
     %                  loss, delay      — packet loss and delay (steps) for the
     %                                     decentralised filter's CommChannel
     %                  faults           — struct array for FaultInjector
+    %                  residual, kappa  — disturbance model for the filter
     % Returns a struct of scalar metrics and the finished SimEngine.
     if nargin < 5, control_period = []; end
     if nargin < 6, viz = []; end
@@ -35,10 +37,23 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
             filt = SafetyFilter(nominal, 'Mode', 'decentralised');
         case 'cbf_decentral_rhb'
             filt = SafetyFilter(nominal, 'Mode', 'decentralised', 'RightHandBias', 1.0);
+        case {'mpc', 'mpc_cbf'}
+            mpc = NMPCPlanner(sc.goals);
+            mpc.via = sc.via;
+            behav = mpc;
+            if strcmp(controller, 'mpc_cbf')
+                filt = SafetyFilter(mpc, 'Mode', 'decentralised');
+            end
         otherwise
             error('run_case:Controller', 'Unknown controller %s', controller);
     end
-    if ~isempty(filt), behav = filt; end
+    if ~isempty(filt)
+        behav = filt;
+        if ~isempty(opts.residual)
+            filt.residual = opts.residual;
+            filt.kappa    = opts.kappa;
+        end
+    end
     comm = [];
     if ~isempty(filt) && strcmp(filt.mode, 'decentralised') && (opts.loss > 0 || opts.delay > 0 || ...
        any(strcmp({opts.faults.mode}, 'silent')))
@@ -93,10 +108,18 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
         r.mean_solve_ms = 1000 * mean(filt.log_solve);
         r.safe_distance = filt.safe_distance(sc.swarm);
     end
+    r.mpc_soft = NaN; r.mpc_failed = NaN;
+    if exist('mpc', 'var')
+        r.mpc_soft   = mpc.n_soft;
+        r.mpc_failed = mpc.n_failed;
+        filt_ms = r.mean_solve_ms;
+        if isnan(filt_ms), filt_ms = 0; end
+        r.mean_solve_ms = 1000 * mean(mpc.log_solve) + filt_ms;   % planner + filter per control call
+    end
 end
 
 function o = fill_defaults(o)
-    d = struct('noise_p', 0, 'noise_v', 0, 'loss', 0, 'delay', 0, ...
+    d = struct('noise_p', 0, 'noise_v', 0, 'loss', 0, 'delay', 0, 'residual', [], 'kappa', 2, ...
                'faults', struct('agent', {}, 'mode', {}, 't_start', {}));
     for f = fieldnames(d)'
         if ~isfield(o, f{1}), o.(f{1}) = d.(f{1}); end

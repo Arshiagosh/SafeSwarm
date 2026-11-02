@@ -45,6 +45,9 @@ classdef NMPCPlanner < handle
         sensing_radius = 4.0;   % neighbours farther than this are ignored (m)
         polygon_sides  = 16;
 
+        via     = [];           % optional 2×N via points (as in GoToGoal); empty = none
+        via_tol = 0.8;          % distance at which a via point counts as passed (m)
+        passed  = [];           % 1×N logical
         plans   = [];           % 2×(H+1)×N planned positions from the last call
         U_prev  = {};           % warm starts
         n_calls = 0;
@@ -106,6 +109,13 @@ classdef NMPCPlanner < handle
                 end
             end
 
+            goals = obj.goals;
+            if ~isempty(obj.via)
+                if isempty(obj.passed), obj.passed = isnan(obj.via(1, :)); end
+                obj.passed = obj.passed | vecnorm(S(1:2, :) - obj.via) <= obj.via_tol;
+                goals(:, ~obj.passed) = obj.via(:, ~obj.passed);
+            end
+
             u = zeros(2, n);
             new_plans = zeros(2, H + 1, n);
             if numel(obj.U_prev) ~= n, obj.U_prev = repmat({zeros(2*H, 1)}, 1, n); end
@@ -118,7 +128,7 @@ classdef NMPCPlanner < handle
                 dyn = swarm.agents{i}.dynamics;
                 [A, b] = obj.linear_bounds(dyn, di, Gv, v0);
                 % Decision vector z = [U; s]; s >= 0 softens the collision rows.
-                fun = @(z) obj.cost(z, G, p0, Gv, v0, obj.goals(:, i), di);
+                fun = @(z) obj.cost(z, G, p0, Gv, v0, goals(:, i), di);
                 con = @(z) obj.collision(z, G, p0, pred(:, :, nb), D, env);
                 U0  = [obj.U_prev{i}(3:end); obj.U_prev{i}(end-1:end)];
                 lb  = [-inf(2*H, 1); 0];
@@ -226,8 +236,7 @@ classdef NMPCPlanner < handle
                                   min(max(p(2), obs.y_range(1)), obs.y_range(2))];
                             R = D/2;
                         end
-                        d = p - qc;
-                        if norm(d) > obj.sensing_radius, continue; end
+                        d = p - qc;   % every obstacle row is kept: fmincon needs a fixed count
                         c(end+1, 1) = R^2 - d' * d;                      %#ok<AGROW>
                         dc(:, end+1) = -2 * G(2*k-1:2*k, :)' * d;        %#ok<AGROW>
                     end
