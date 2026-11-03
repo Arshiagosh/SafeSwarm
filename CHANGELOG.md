@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (M4: planning and learning)
+
+- NMPCPlanner: distributed nonlinear MPC (fmincon SQP) with plan sharing, soft collision
+  constraints, via points; single and double integrators.
+- Dynamics: optional unknown disturbance d(p). SafetyFilter: `residual` model (mean corrects,
+  kappa * std tightens every CBF row, including the speed barrier). GPResidual (fitrgp) and
+  FunctionResidual.
+- Experiment E4 (MPC vs CBF; GP residual under an unknown wind field); 47 unit tests.
+
 ## Unreleased (M3: uncertainty)
 
 - CommChannel: per-link packet loss, delay in control steps, silent robots; each robot keeps the

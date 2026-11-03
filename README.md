@@ -11,7 +11,7 @@
 <p align="center">
   <img alt="MATLAB" src="https://img.shields.io/badge/MATLAB-R2023b-0076A8">
   <img alt="Optimization Toolbox" src="https://img.shields.io/badge/needs-Optimization%20Toolbox-orange">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-40%20passing-brightgreen">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-47%20passing-brightgreen">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -156,21 +156,61 @@ integrator with either filter, and in none for the single integrator. In every f
 seven healthy robots reached their goals, except with the wandering robot under the decentralised
 double-integrator filter (6.8 of 7 on average).
 
+### E4: MPC against the filters, and a learned disturbance model
+
+<p align="center">
+  <img src="figures/e4_mpc.png" width="100%" alt="Closest approach of four controllers on three scenes">
+</p>
+
+**Distributed MPC** (`e4a_mpc_vs_cbf.m`, 5 seeds per cell, every controller at 5 Hz). Each robot
+solves a 10-step (2 s) nonlinear MPC with `fmincon` and avoids its neighbours' plans from the
+previous step (`mpc/NMPCPlanner.m`). On its own it made contact in most runs: 4 of 5 (swap), 5 of 5
+(crossing) and 5 of 5 (corridor) for the single integrator, 5, 5 and 1 of 5 for the double
+integrator. Its constraints hold only at the 0.2 s sample points and against plans that are one step
+old, and two robots closing at 2 m/s cover 0.4 m between samples. Putting the decentralised CBF
+filter on top removed contact in every swap and crossing run and in the single-integrator corridor;
+in the double-integrator corridor 2 of 5 runs still touched (closest 0.598 m), with about 20
+infeasible filter steps per run. The MPC also got stuck more often than the go-to-goal filters
+(none of the six corridor robots arrived with MPC plus filter, single integrator). The centralised
+filter on go-to-goal had no contact in any of the 30 runs. One control call for all eight robots
+took 13 to 32 ms with MPC alone (up to 49 ms with the filter on top) and 3 to 16 ms with the
+filters. This is a plain MPC with no
+inter-sample or deadlock handling, so read it as a baseline, not as the best MPC can do.
+
+<p align="center">
+  <img src="figures/e4_gp.png" width="100%" alt="Contact rate and closest approach with and without a disturbance model">
+</p>
+
+**Unknown wind and a GP model of it** (`e4b_gp_residual.m`, swap scene, centralised filter, 10
+seeds). Every robot is pushed by the same position-dependent field (a swirl plus a steady push,
+up to about 0.5 in input units) that the filter does not know. A Gaussian process
+(`mpc/GPResidual.m`, `fitrgp`) is trained per seed on 400 samples from 20 s of the robots wandering
+in the field; its mean error over the swap area was 0.053 (single integrator) and 0.029 (double
+integrator). Without a model, the double-integrator robots made contact in 3 of 10 runs. With the
+GP mean, the GP mean plus two standard deviations, or the true field, none did; the 2σ margin kept
+them further apart (median closest approach 0.729 m against 0.649 m with the mean). The single
+integrator made no contact even without a model. No robot ended within 0.2 m of its goal in this
+experiment, because the go-to-goal controller has a steady offset in the wind; that is the nominal
+controller, not the filter.
+
 ## Running it
 
 MATLAB R2023b (older releases will probably work but are untested). The core needs base MATLAB;
-`SafetyFilter` needs the Optimization Toolbox (`quadprog`) and says so if it is missing.
+`SafetyFilter` and `NMPCPlanner` need the Optimization Toolbox (`quadprog`, `fmincon`) and
+`GPResidual` the Statistics and Machine Learning Toolbox (`fitrgp`); each says so if it is missing.
 
 ```matlab
 cd SafeSwarm
 startup                                  % adds everything to the path
 run('scenarios/scenario_swap_cbf.m')     % swap with and without the filter, prints the closest approach
-run('tests/run_tests.m')                 % 40 unit tests
+run('tests/run_tests.m')                 % 47 unit tests
 run('experiments/e1_benchmarks.m')       % E1 table, figures and swap GIF (a few minutes)
 run('experiments/e2_sampled_sweep.m')    % E2 sweep (takes longer: 2 ms steps)
 run('experiments/e3a_noise.m')           % E3 Monte Carlo sweeps (each takes a while)
 run('experiments/e3b_comm.m')
 run('experiments/e3c_faults.m')
+run('experiments/e4a_mpc_vs_cbf.m')      % E4 (MPC runs take a while)
+run('experiments/e4b_gp_residual.m')
 ```
 
 A filter around your own behaviour:
@@ -208,10 +248,11 @@ behaviours/     SwarmSim behaviours + DisplacementFormation, GoToGoal, FunctionB
 planners/       AStar, RRT, PotentialField
 safety/         SafetyFilter (CBF-QP, centralised and decentralised)
 uncertainty/    NoisyObservation, FaultInjector, MonteCarloRunner
+mpc/            NMPCPlanner (distributed NMPC), GPResidual, FunctionResidual
 tools/          MetricsAnalyzer, ExperimentRunner, ParamSweep, PublicationPlot
 visualization/  SwarmVisualizer (with GIF export)
 scenarios/      runnable examples
-experiments/    E1 to E3; each writes figures/ and results.json
+experiments/    E1 to E4; each writes figures/ and results.json
 tests/          matlab.unittest suites, run_tests.m, run_all_scenarios.m
 docs/           SAFETY.md
 ```
@@ -235,9 +276,9 @@ Besides the new parts above, porting the core turned up a few things that are fi
 - The scenes are small (6 to 8 robots). E1 and E2 are single seeded runs; E3 uses 10 seeds per
   setting, which shows trends but gives wide intervals.
 - The noise and delay results use the filter as it is; nothing in it accounts for noise or delay.
+- The MPC planner works for single and double integrators only, not the unicycle.
 
-Next on the list: a nonlinear MPC planner and a learned residual model compared with the filter; a ROS 2 bridge; then
-a Python port in `python/`.
+Next on the list: a ROS 2 bridge, a release, then a Python port in `python/`.
 
 ## References
 
