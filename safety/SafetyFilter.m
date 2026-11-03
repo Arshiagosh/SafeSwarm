@@ -53,7 +53,8 @@ classdef SafetyFilter < handle
     % enters like the input, set residual to a model with
     % [mu, sd] = residual.predict(P) (e.g. GPResidual). Each CBF row then
     % adds the predicted effect 2 dp'(mu_i - mu_j) and subtracts the margin
-    % 2 ||dp|| kappa (||sd_i|| + ||sd_j||). kappa = 0 uses the mean only.
+    % 2 ||dp|| kappa (||sd_i|| + ||sd_j||); the speed barrier gets the same
+    % treatment. kappa = 0 uses the mean only.
     % Point-mass agents only.
     %
     % Requires the Optimization Toolbox (quadprog).
@@ -302,7 +303,9 @@ classdef SafetyFilter < handle
                         v = V(:, i);
                         ai(end+1, :) = 2 * v';                          %#ok<AGROW>
                         aj(end+1, :) = [0 0];                           %#ok<AGROW>
-                        b(end+1, 1)  = obj.alpha_v * (vmax^2 - v'*v);   %#ok<AGROW>
+                        % A disturbance model also enters here: 2 v'(a + d) <= ...
+                        b(end+1, 1)  = obj.alpha_v * (vmax^2 - v'*v) ...
+                                       - 2*v'*MU(:,i) - 2*norm(v)*obj.kappa*sdn(i); %#ok<AGROW>
                         I(end+1, 1)  = i;                               %#ok<AGROW>
                         J(end+1, 1)  = 0;                               %#ok<AGROW>
                     end
