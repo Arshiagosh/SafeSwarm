@@ -2502,7 +2502,7 @@
       "reached_all_rate": 0,
       "reached_mean": 0,
       "infeasible_steps_mean": 0,
-      "gp_rmse_mean": null
+      "gp_rmse_mean": []
     },
     {
       "dynamics": "si",
@@ -2547,7 +2547,7 @@
       "reached_all_rate": 0,
       "reached_mean": 0,
       "infeasible_steps_mean": 0,
-      "gp_rmse_mean": null
+      "gp_rmse_mean": []
     },
     {
       "dynamics": "di",
@@ -2562,7 +2562,7 @@
       "reached_all_rate": 0,
       "reached_mean": 0,
       "infeasible_steps_mean": 0,
-      "gp_rmse_mean": null
+      "gp_rmse_mean": []
     },
     {
       "dynamics": "di",
@@ -2607,7 +2607,21 @@
       "reached_all_rate": 0,
       "reached_mean": 0,
       "infeasible_steps_mean": 0,
-      "gp_rmse_mean": null
+      "gp_rmse_mean": []
+    }
+  ],
+  "ros2": [
+    {
+      "name": "cmd_nominal",
+      "min_distance": 0.0085264824686388727,
+      "agent_collisions": 33,
+      "late": 1
+    },
+    {
+      "name": "cmd_safe",
+      "min_distance": 0.65009205941013859,
+      "agent_collisions": 0,
+      "late": 0
     }
   ]
 }
