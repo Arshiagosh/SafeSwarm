@@ -11,7 +11,7 @@
 <p align="center">
   <img alt="MATLAB" src="https://img.shields.io/badge/MATLAB-R2023b-0076A8">
   <img alt="Optimization Toolbox" src="https://img.shields.io/badge/needs-Optimization%20Toolbox-orange">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-47%20passing-brightgreen">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-49%20passing-brightgreen">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -193,6 +193,20 @@ integrator made no contact even without a model. No robot ended within 0.2 m of 
 experiment, because the go-to-goal controller has a steady offset in the wind; that is the nominal
 controller, not the filter.
 
+### ROS 2: the filter as a node
+
+<p align="center">
+  <img src="figures/ros2_swap.png" width="80%" alt="Swap over ROS 2 topics, without and with the filter node">
+</p>
+
+`ros2/` runs any SafeSwarm behaviour, or the filter around commands from any other node, as a
+ROS 2 node (MATLAB ROS Toolbox). Each robot has `<ns>/odom` (nav_msgs/Odometry),
+`<ns>/cmd_nominal` and `<ns>/cmd_safe` (stamped Twist, or Accel for double integrators).
+`ros2/demo_ros2_swap.m` runs three nodes that only talk over topics: eight simulated robots, a
+go-to-goal controller and the centralised filter. With the robots listening to `cmd_nominal` the
+closest approach was 0.009 m; with them listening to `cmd_safe` it was 0.650 m and no step had
+contact. Everything ran on one machine with simulated robots; it has not been tried on hardware.
+
 ## Running it
 
 MATLAB R2023b (older releases will probably work but are untested). The core needs base MATLAB;
@@ -203,7 +217,7 @@ MATLAB R2023b (older releases will probably work but are untested). The core nee
 cd SafeSwarm
 startup                                  % adds everything to the path
 run('scenarios/scenario_swap_cbf.m')     % swap with and without the filter, prints the closest approach
-run('tests/run_tests.m')                 % 47 unit tests
+run('tests/run_tests.m')                 % 49 unit tests
 run('experiments/e1_benchmarks.m')       % E1 table, figures and swap GIF (a few minutes)
 run('experiments/e2_sampled_sweep.m')    % E2 sweep (takes longer: 2 ms steps)
 run('experiments/e3a_noise.m')           % E3 Monte Carlo sweeps (each takes a while)
@@ -211,6 +225,7 @@ run('experiments/e3b_comm.m')
 run('experiments/e3c_faults.m')
 run('experiments/e4a_mpc_vs_cbf.m')      % E4 (MPC runs take a while)
 run('experiments/e4b_gp_residual.m')
+run('ros2/demo_ros2_swap.m')             % needs the ROS Toolbox
 ```
 
 A filter around your own behaviour:
@@ -249,6 +264,7 @@ planners/       AStar, RRT, PotentialField
 safety/         SafetyFilter (CBF-QP, centralised and decentralised)
 uncertainty/    NoisyObservation, FaultInjector, MonteCarloRunner
 mpc/            NMPCPlanner (distributed NMPC), GPResidual, FunctionResidual
+ros2/           BehaviourNode, TopicCommand, SimRobotsNode, RosTopics, demo_ros2_swap.m
 tools/          MetricsAnalyzer, ExperimentRunner, ParamSweep, PublicationPlot
 visualization/  SwarmVisualizer (with GIF export)
 scenarios/      runnable examples
@@ -278,7 +294,7 @@ Besides the new parts above, porting the core turned up a few things that are fi
 - The noise and delay results use the filter as it is; nothing in it accounts for noise or delay.
 - The MPC planner works for single and double integrators only, not the unicycle.
 
-Next on the list: a ROS 2 bridge, a release, then a Python port in `python/`.
+Next on the list: a v1.0 release, then a Python port in `python/`.
 
 ## References
 

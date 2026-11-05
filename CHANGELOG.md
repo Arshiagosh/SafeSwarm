@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased (M7: ROS 2 bridge)
+
+- ros2/: BehaviourNode (any behaviour or filter as a ROS 2 node), TopicCommand (commands from
+  topics as a behaviour), SimRobotsNode (simulated robots), RosTopics (message conversions),
+  demo_ros2_swap.m. 49 unit tests.
+
 ## Unreleased (M4: planning and learning)
 
 - NMPCPlanner: distributed nonlinear MPC (fmincon SQP) with plan sharing, soft collision
