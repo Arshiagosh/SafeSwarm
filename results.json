@@ -6,7 +6,7 @@
       "controller": "nominal",
       "control_period": [],
       "min_distance": 0.0055442696434969581,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 33,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -16,8 +16,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -25,7 +27,7 @@
       "controller": "potential",
       "control_period": [],
       "min_distance": 0.20827862756729296,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 94,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -35,8 +37,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -44,7 +48,7 @@
       "controller": "cbf_central",
       "control_period": [],
       "min_distance": 0.65001172811600816,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -54,8 +58,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 11.478723749999997,
-      "safe_distance": 0.65
+      "mean_solve_ms": 9.582617125,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -63,18 +69,20 @@
       "controller": "cbf_decentral",
       "control_period": [],
       "min_distance": 0.64999999996451474,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 0,
       "n_agents": 8,
-      "time_all_reached": [],
+      "time_all_reached": null,
       "control_effort": 30.69296328261283,
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 4.0081904999999995,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.2671495,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -82,7 +90,7 @@
       "controller": "cbf_decentral_rhb",
       "control_period": [],
       "min_distance": 0.65015713744239423,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -92,8 +100,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 4.1130507499999984,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.5623394999999993,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -101,7 +111,7 @@
       "controller": "nominal",
       "control_period": [],
       "min_distance": 0.0055442696434917791,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 33,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -111,8 +121,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -120,7 +132,7 @@
       "controller": "potential",
       "control_period": [],
       "min_distance": 0.00529179971133127,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 45,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -130,8 +142,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -139,7 +153,7 @@
       "controller": "cbf_central",
       "control_period": [],
       "min_distance": 0.64883609228395356,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -149,8 +163,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 12.179946874999999,
-      "safe_distance": 0.65
+      "mean_solve_ms": 10.562012875,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -158,7 +174,7 @@
       "controller": "cbf_decentral",
       "control_period": [],
       "min_distance": 0.641163188356825,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -168,8 +184,10 @@
       "qp_calls": 800,
       "qp_infeasible": 66,
       "max_slack": 0.089350498527476521,
-      "mean_solve_ms": 4.2194317499999991,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.407676,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "swap",
@@ -177,7 +195,7 @@
       "controller": "cbf_decentral_rhb",
       "control_period": [],
       "min_distance": 0.64994441276361392,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -187,8 +205,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 4.2736505000000014,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.3280443749999993,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -196,7 +216,7 @@
       "controller": "nominal",
       "control_period": [],
       "min_distance": 0.023913208307290847,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 68,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -206,8 +226,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -215,7 +237,7 @@
       "controller": "potential",
       "control_period": [],
       "min_distance": 0.15648313683566167,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 120,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -225,8 +247,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -234,7 +258,7 @@
       "controller": "cbf_central",
       "control_period": [],
       "min_distance": 0.65048659893196614,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -244,8 +268,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 12.484133750000005,
-      "safe_distance": 0.65
+      "mean_solve_ms": 9.363996625,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -253,7 +279,7 @@
       "controller": "cbf_decentral",
       "control_period": [],
       "min_distance": 0.65000696527948587,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -263,8 +289,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 4.315169749999999,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.1955253749999981,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -272,7 +300,7 @@
       "controller": "cbf_decentral_rhb",
       "control_period": [],
       "min_distance": 0.88547795368942961,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -282,8 +310,10 @@
       "qp_calls": 800,
       "qp_infeasible": 1,
       "max_slack": 2.980721351494851E-7,
-      "mean_solve_ms": 4.179132125,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.3625782499999994,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -291,7 +321,7 @@
       "controller": "nominal",
       "control_period": [],
       "min_distance": 0.023913208307281782,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 68,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -301,8 +331,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -310,7 +342,7 @@
       "controller": "potential",
       "control_period": [],
       "min_distance": 0.025037167874013465,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 86,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -320,8 +352,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -329,7 +363,7 @@
       "controller": "cbf_central",
       "control_period": [],
       "min_distance": 0.65002793669925951,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -339,8 +373,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 14.59109125,
-      "safe_distance": 0.65
+      "mean_solve_ms": 11.764121124999996,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -348,7 +384,7 @@
       "controller": "cbf_decentral",
       "control_period": [],
       "min_distance": 0.64987204089408446,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -358,8 +394,10 @@
       "qp_calls": 800,
       "qp_infeasible": 39,
       "max_slack": 0.081670171607179667,
-      "mean_solve_ms": 4.218994375,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.392292874999999,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "crossing",
@@ -367,7 +405,7 @@
       "controller": "cbf_decentral_rhb",
       "control_period": [],
       "min_distance": 0.88547795368942961,
-      "min_clearance": [],
+      "min_clearance": null,
       "agent_collision_steps": 0,
       "obstacle_collision_steps": 0,
       "reached": 8,
@@ -377,8 +415,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 4.1721731250000005,
-      "safe_distance": 0.65
+      "mean_solve_ms": 4.4194649999999971,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -396,8 +436,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -415,8 +457,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -434,8 +478,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 7.1122243750000012,
-      "safe_distance": 0.65
+      "mean_solve_ms": 6.3768935000000013,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -448,13 +494,15 @@
       "obstacle_collision_steps": 0,
       "reached": 0,
       "n_agents": 6,
-      "time_all_reached": [],
+      "time_all_reached": null,
       "control_effort": 30.5530349330117,
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 3.5939349999999988,
-      "safe_distance": 0.65
+      "mean_solve_ms": 3.7646661250000015,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -472,8 +520,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 3.2232735000000012,
-      "safe_distance": 0.65
+      "mean_solve_ms": 3.596245625,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -491,8 +541,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -510,8 +562,10 @@
       "qp_calls": 0,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": [],
-      "safe_distance": []
+      "mean_solve_ms": null,
+      "safe_distance": null,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -529,8 +583,10 @@
       "qp_calls": 800,
       "qp_infeasible": 0,
       "max_slack": 0,
-      "mean_solve_ms": 7.869671875,
-      "safe_distance": 0.65
+      "mean_solve_ms": 7.9634934999999984,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -543,13 +599,15 @@
       "obstacle_collision_steps": 0,
       "reached": 3,
       "n_agents": 6,
-      "time_all_reached": [],
+      "time_all_reached": null,
       "control_effort": 10.276376756964519,
       "qp_calls": 800,
       "qp_infeasible": 84,
       "max_slack": 0.68723406217039307,
-      "mean_solve_ms": 3.4929717499999997,
-      "safe_distance": 0.65
+      "mean_solve_ms": 3.735894,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     },
     {
       "scene": "corridor",
@@ -567,8 +625,10 @@
       "qp_calls": 800,
       "qp_infeasible": 26,
       "max_slack": 0.42723285275386613,
-      "mean_solve_ms": 3.4579451249999993,
-      "safe_distance": 0.65
+      "mean_solve_ms": 3.659815500000001,
+      "safe_distance": 0.65,
+      "mpc_soft": null,
+      "mpc_failed": null
     }
   ],
   "generated_with": "MATLAB 2023b",
