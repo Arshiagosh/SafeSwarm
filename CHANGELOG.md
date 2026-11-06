@@ -1,12 +1,21 @@
 # Changelog
 
-## Unreleased (M7: ROS 2 bridge)
+## 1.0.0 (2026-11-06)
+
+First release.
+
+### Release
+
+- One-command benchmark (`safeswarm_bench`), architecture page, toolbox packaging,
+  GitHub Actions workflow, CITATION.cff.
+
+### M7: ROS 2 bridge
 
 - ros2/: BehaviourNode (any behaviour or filter as a ROS 2 node), TopicCommand (commands from
   topics as a behaviour), SimRobotsNode (simulated robots), RosTopics (message conversions),
   demo_ros2_swap.m. 49 unit tests.
 
-## Unreleased (M4: planning and learning)
+### M4: planning and learning
 
 - NMPCPlanner: distributed nonlinear MPC (fmincon SQP) with plan sharing, soft collision
   constraints, via points; single and double integrators.
@@ -15,7 +24,7 @@
   FunctionResidual.
 - Experiment E4 (MPC vs CBF; GP residual under an unknown wind field); 47 unit tests.
 
-## Unreleased (M3: uncertainty)
+### M3: uncertainty
 
 - CommChannel: per-link packet loss, delay in control steps, silent robots; each robot keeps the
   last state it received. The decentralised SafetyFilter uses it through its `comm` property.
@@ -23,7 +32,7 @@
   (freeze, random walk, silent), MonteCarloRunner (seeded batches, Wilson intervals).
 - Experiment E3 (noise, lossy and delayed messages, faulty robot); 40 unit tests.
 
-## Unreleased (MVP: core and safety filters)
+### MVP: core and safety filters
 
 - Started from SwarmSim's core (dynamics, swarm, engine, behaviours, planners, tools).
 - Dynamics: explicit input bounds with saturation counting, exact zero-order-hold steps,

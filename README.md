@@ -12,6 +12,7 @@
   <img alt="MATLAB" src="https://img.shields.io/badge/MATLAB-R2023b-0076A8">
   <img alt="Optimization Toolbox" src="https://img.shields.io/badge/needs-Optimization%20Toolbox-orange">
   <img alt="Tests" src="https://img.shields.io/badge/tests-49%20passing-brightgreen">
+  <img alt="Release" src="https://img.shields.io/badge/release-v1.0-blue">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -51,15 +52,21 @@ planners → tools) and adds what a safety study needs:
 - **A sampled-data mode** in the engine: the controller runs every T seconds and its command is
   held while the dynamics keep integrating, to see what a continuous-time certificate is worth
   on a digital controller.
-- **Benchmarks** (swap, crossing, corridor) that write `results.json` and every figure in this
-  README from a script.
+- **Uncertainty and faults**: sensor noise, lossy and delayed messages that the decentralised
+  filter really acts on, faulty robots, and a seeded Monte Carlo runner.
+- **Planning and learning**: a distributed nonlinear MPC planner and a Gaussian-process model of
+  an unknown disturbance that corrects and tightens the filter.
+- **A ROS 2 bridge**: the filter (or any behaviour) runs as a node between controllers and robots.
+- **Benchmarks** that write `results.json` and every figure in this README from a script, and
+  one command, `safeswarm_bench`, to rerun them.
 
-The maths is on one page in [docs/SAFETY.md](docs/SAFETY.md).
+The maths is on one page in [docs/SAFETY.md](docs/SAFETY.md), and the code layout in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Results
 
-All numbers below come from `experiments/e1_benchmarks.m` and `experiments/e2_sampled_sweep.m`
-(MATLAB R2023b) and are stored in [results.json](results.json). Robots have radius 0.3 m, so they
+All numbers below come from the scripts in `experiments/` and `ros2/` (MATLAB R2023b) and are
+stored in [results.json](results.json). Robots have radius 0.3 m, so they
 touch at 0.6 m; the filter keeps D = 0.65 m between centres. Speeds are bounded by 1 m/s and
 accelerations by 1 m/s². Starts get a 5 cm random offset (seed 1) to break exact symmetry.
 
@@ -216,6 +223,8 @@ MATLAB R2023b (older releases will probably work but are untested). The core nee
 ```matlab
 cd SafeSwarm
 startup                                  % adds everything to the path
+safeswarm_bench('quick')                 % tests + E1 + the swap GIF, a few minutes
+safeswarm_bench('full')                  % every experiment (hours: Monte Carlo and MPC runs)
 run('scenarios/scenario_swap_cbf.m')     % swap with and without the filter, prints the closest approach
 run('tests/run_tests.m')                 % 49 unit tests
 run('experiments/e1_benchmarks.m')       % E1 table, figures and swap GIF (a few minutes)
@@ -251,6 +260,9 @@ behav = NoisyObservation(behav, 0.05, 0.05);             % position / velocity n
 rows  = MonteCarloRunner.run(@(seed) my_case(seed), 1:20);
 ```
 
+SafeSwarm can also be installed as a MATLAB toolbox: `tools/package_toolbox` builds
+`release/SafeSwarm.mltbx`; double-click it, or `matlab.addons.install('release/SafeSwarm.mltbx')`.
+
 The SwarmSim scenarios (`scenarios/scenario_*.m`) still run unchanged:
 `run('tests/run_all_scenarios.m')`.
 
@@ -270,7 +282,8 @@ visualization/  SwarmVisualizer (with GIF export)
 scenarios/      runnable examples
 experiments/    E1 to E4; each writes figures/ and results.json
 tests/          matlab.unittest suites, run_tests.m, run_all_scenarios.m
-docs/           SAFETY.md
+docs/           SAFETY.md, ARCHITECTURE.md
+safeswarm_bench.m   one command for tests and experiments
 ```
 
 ## Changes from SwarmSim
@@ -294,7 +307,11 @@ Besides the new parts above, porting the core turned up a few things that are fi
 - The noise and delay results use the filter as it is; nothing in it accounts for noise or delay.
 - The MPC planner works for single and double integrators only, not the unicycle.
 
-Next on the list: a v1.0 release, then a Python port in `python/`.
+Next: a Python port in `python/` of this repository, checked against the MATLAB results.
+
+## Citing
+
+If SafeSwarm is useful in your work, see [CITATION.cff](CITATION.cff).
 
 ## References
 
