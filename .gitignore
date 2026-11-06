@@ -16,3 +16,7 @@ Thumbs.db
 
 # IDE
 .vscode/
+
+# Toolbox builds
+release/
+results.json.lock/

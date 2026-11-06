@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use SafeSwarm, please cite it as below."
+title: "SafeSwarm: safe multi-robot control in MATLAB"
+version: 1.0.0
+date-released: 2026-12-29
+license: MIT
+repository-code: "https://github.com/Arshiagosh/SafeSwarm"
+authors:
+  - family-names: Goshtasbi
+    given-names: Arshia
+    affiliation: "Iran University of Science and Technology"
+keywords:
+  - multi-robot systems
+  - control barrier functions
+  - safety-critical control
+  - model predictive control
+  - MATLAB
