@@ -4,6 +4,7 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
     %   controller : 'nominal' | 'potential' | 'cbf_central' | 'cbf_decentral'
     %                | 'cbf_decentral_rhb' (decentralised + right-hand bias)
     %                | 'mpc' (distributed NMPC) | 'mpc_cbf' (NMPC + decentralised filter)
+    %                | 'rl' (opts.policy) | 'rl_cbf_central' | 'rl_cbf_decentral'
     %   control_period : zero-order-hold period (empty = every step)
     %   viz        : optional SwarmVisualizer
     %   opts       : optional struct with any of
@@ -12,6 +13,7 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
     %                                     decentralised filter's CommChannel
     %                  faults           — struct array for FaultInjector
     %                  residual, kappa  — disturbance model for the filter
+    %                  policy           — trained behaviour for the 'rl*' controllers
     % Returns a struct of scalar metrics and the finished SimEngine.
     if nargin < 5, control_period = []; end
     if nargin < 6, viz = []; end
@@ -44,6 +46,12 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
             if strcmp(controller, 'mpc_cbf')
                 filt = SafetyFilter(mpc, 'Mode', 'decentralised');
             end
+        case 'rl'
+            behav = opts.policy;
+        case 'rl_cbf_central'
+            filt = SafetyFilter(opts.policy, 'Mode', 'centralised');
+        case 'rl_cbf_decentral'
+            filt = SafetyFilter(opts.policy, 'Mode', 'decentralised');
         otherwise
             error('run_case:Controller', 'Unknown controller %s', controller);
     end
@@ -119,7 +127,7 @@ function [r, sim] = run_case(sc, controller, t_max, dt, control_period, viz, opt
 end
 
 function o = fill_defaults(o)
-    d = struct('noise_p', 0, 'noise_v', 0, 'loss', 0, 'delay', 0, 'residual', [], 'kappa', 2, ...
+    d = struct('noise_p', 0, 'noise_v', 0, 'loss', 0, 'delay', 0, 'residual', [], 'kappa', 2, 'policy', [], ...
                'faults', struct('agent', {}, 'mode', {}, 't_start', {}));
     for f = fieldnames(d)'
         if ~isfield(o, f{1}), o.(f{1}) = d.(f{1}); end
