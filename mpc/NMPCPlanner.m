@@ -25,7 +25,9 @@ classdef NMPCPlanner < handle
     %
     % Use with SimEngine.control_period = tau so the first input of each
     % plan is held for exactly one MPC step.
-    % Works with: SingleIntegrator, DoubleIntegrator.
+    % Works with: SingleIntegrator, DoubleIntegrator, Unicycle. For the
+    % unicycle the plan is an exact arc rollout of (v, omega) per step with box
+    % bounds, and fmincon uses finite-difference gradients (slower).
     % Requires the Optimization Toolbox (fmincon).
     %
     % Example:
@@ -59,6 +61,7 @@ classdef NMPCPlanner < handle
 
     properties (Access = private)
         opts
+        opts_fd     % unicycle: finite-difference gradients
     end
 
     methods
@@ -85,6 +88,8 @@ classdef NMPCPlanner < handle
             obj.opts = optimoptions('fmincon', 'Algorithm', 'sqp', 'Display', 'off', ...
                 'SpecifyObjectiveGradient', true, 'SpecifyConstraintGradient', true, ...
                 'MaxIterations', 100, 'OptimalityTolerance', 1e-4, 'ConstraintTolerance', 1e-4);
+            obj.opts_fd = optimoptions(obj.opts, 'SpecifyObjectiveGradient', false, ...
+                'SpecifyConstraintGradient', false);
         end
 
         function u = compute_control(obj, swarm, env)
@@ -103,7 +108,7 @@ classdef NMPCPlanner < handle
                     pj = obj.plans(:, 3:end, j);
                     pred(:, :, j) = [pj, repmat(pj(:, end), 1, H - size(pj, 2))];
                 else
-                    vj = [0; 0];
+                    vj = [0; 0];                % unicycle and SI: assumed at rest
                     if di, vj = S(3:4, j); end
                     pred(:, :, j) = S(1:2, j) + vj * obj.tau * (1:H);
                 end
@@ -119,32 +124,44 @@ classdef NMPCPlanner < handle
             u = zeros(2, n);
             new_plans = zeros(2, H + 1, n);
             if numel(obj.U_prev) ~= n, obj.U_prev = repmat({zeros(2*H, 1)}, 1, n); end
+            uni = size(S, 1) == 3;
             for i = 1:n
-                [G, p0, Gv, v0] = obj.prediction(S(:, i), di);
                 nb = [];
                 for j = [1:i-1, i+1:n]
                     if norm(S(1:2, j) - S(1:2, i)) <= obj.sensing_radius, nb(end+1) = j; end %#ok<AGROW>
                 end
                 dyn = swarm.agents{i}.dynamics;
-                [A, b] = obj.linear_bounds(dyn, di, Gv, v0);
-                % Decision vector z = [U; s]; s >= 0 softens the collision rows.
-                fun = @(z) obj.cost(z, G, p0, Gv, v0, goals(:, i), di);
-                con = @(z) obj.collision(z, G, p0, pred(:, :, nb), D, env);
                 U0  = [obj.U_prev{i}(3:end); obj.U_prev{i}(end-1:end)];
-                lb  = [-inf(2*H, 1); 0];
-                [z, ~, flag] = fmincon(fun, [U0; 0], [A, zeros(size(A, 1), 1)], b, ...
-                                       [], [], lb, [], con, obj.opts);
-                U = z(1:end-1);
+                if uni
+                    [U, Pi, flag, sl] = obj.solve_unicycle(S(:, i), dyn, goals(:, i), ...
+                                                           pred(:, :, nb), D, env, U0);
+                else
+                    [G, p0, Gv, v0] = obj.prediction(S(:, i), di);
+                    [A, b] = obj.linear_bounds(dyn, di, Gv, v0);
+                    % Decision vector z = [U; s]; s >= 0 softens the collision rows.
+                    fun = @(z) obj.cost(z, G, p0, Gv, v0, goals(:, i), di);
+                    con = @(z) obj.collision(z, G, p0, pred(:, :, nb), D, env);
+                    lb  = [-inf(2*H, 1); 0];
+                    [z, ~, flag] = fmincon(fun, [U0; 0], [A, zeros(size(A, 1), 1)], b, ...
+                                           [], [], lb, [], con, obj.opts);
+                    U  = z(1:end-1);
+                    sl = z(end);
+                end
                 if flag <= 0
                     % Solver failure: keep the previous plan, shifted, and count it.
                     obj.n_failed = obj.n_failed + 1;
                     U = U0;
-                elseif z(end) > 1e-3
+                elseif sl > 1e-3
                     obj.n_soft = obj.n_soft + 1;
                 end
                 obj.U_prev{i} = U;
                 u(:, i) = U(1:2);
-                new_plans(:, :, i) = [S(1:2, i), reshape(p0 + G * U, 2, H)];
+                if uni
+                    Pi = obj.rollout_unicycle(S(:, i), U);
+                    new_plans(:, :, i) = [S(1:2, i), Pi];
+                else
+                    new_plans(:, :, i) = [S(1:2, i), reshape(p0 + G * U, 2, H)];
+                end
             end
             obj.plans = new_plans;
             obj.n_calls = obj.n_calls + 1;
@@ -153,6 +170,80 @@ classdef NMPCPlanner < handle
     end
 
     methods (Access = private)
+        function [U, P, flag, sl] = solve_unicycle(obj, x, dyn, g, pred, D, env, U0)
+            % Unicycle: U = [v_1; w_1; ...; v_H; w_H] with box bounds, exact arc
+            % rollout, gradients by finite differences (no analytic Jacobian).
+            H  = obj.horizon;
+            lb = [repmat([-dyn.max_speed; -dyn.max_omega], H, 1); 0];
+            ub = [repmat([ dyn.max_speed;  dyn.max_omega], H, 1); Inf];
+            fun = @(z) obj.cost_unicycle(z, x, g);
+            con = @(z) obj.collision_unicycle(z, x, pred, D, env);
+            [z, ~, flag] = fmincon(fun, [min(max(U0, lb(1:end-1)), ub(1:end-1)); 0], ...
+                                   [], [], [], [], lb, ub, con, obj.opts_fd);
+            U  = z(1:end-1);
+            sl = z(end);
+            P  = obj.rollout_unicycle(x, U);
+        end
+
+        function P = rollout_unicycle(obj, x, U)
+            % Positions after each of the H steps under constant (v, w) per step.
+            H = obj.horizon; t = obj.tau;
+            P = zeros(2, H);
+            for k = 1:H
+                v = U(2*k-1); w = U(2*k); th = x(3);
+                if abs(w) < 1e-9
+                    x(1:2) = x(1:2) + v * t * [cos(th); sin(th)];
+                else
+                    x(1:2) = x(1:2) + (v / w) * [sin(th + w*t) - sin(th); cos(th) - cos(th + w*t)];
+                end
+                x(3) = th + w * t;
+                P(:, k) = x(1:2);
+            end
+        end
+
+        function J = cost_unicycle(obj, z, x, g)
+            U = z(1:end-1); sl = z(end);
+            P = obj.rollout_unicycle(x, U);
+            E = P - g;
+            J = obj.q * sum(E(:).^2) + obj.r * (U' * U) + obj.slack_weight * (sl + sl^2);
+        end
+
+        function [c, ceq] = collision_unicycle(obj, z, x, pred, D, env)
+            P = obj.rollout_unicycle(x, z(1:end-1));
+            [c, ceq] = obj.position_constraints(P, pred, D, env);
+            c = c - z(end);
+        end
+
+        function [c, ceq] = position_constraints(obj, P, pred, D, env)
+            % Same rows as collision(), from planned positions directly.
+            H = obj.horizon;
+            c = zeros(0, 1);
+            for jj = 1:size(pred, 3)
+                for k = 1:H
+                    d = P(:, k) - pred(:, k, jj);
+                    c(end+1, 1) = D^2 - d' * d; %#ok<AGROW>
+                end
+            end
+            if ~isempty(env)
+                for o = 1:numel(env.obstacles)
+                    obs = env.obstacles{o};
+                    for k = 1:H
+                        p = P(:, k);
+                        if strcmp(obs.type, 'circle')
+                            qc = obs.center(:); R = obs.radius + D/2;
+                        else
+                            qc = [min(max(p(1), obs.x_range(1)), obs.x_range(2));
+                                  min(max(p(2), obs.y_range(1)), obs.y_range(2))];
+                            R = D/2;
+                        end
+                        d = p - qc;
+                        c(end+1, 1) = R^2 - d' * d; %#ok<AGROW>
+                    end
+                end
+            end
+            ceq = [];
+        end
+
         function [G, p0, Gv, v0] = prediction(obj, x, di)
             % Stacked positions P = p0 + G U (and velocities V = v0 + Gv U) over k = 1..H.
             H = obj.horizon; t = obj.tau;

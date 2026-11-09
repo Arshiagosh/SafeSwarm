@@ -2,6 +2,7 @@ function sc = make_scene(name, kind, seed)
     % make_scene(name, kind, seed) — benchmark scene with agents, map and goals
     %   name : 'swap' | 'crossing' | 'corridor'
     %   kind : 'si' (SingleIntegrator, 1 m/s) | 'di' (DoubleIntegrator, 1 m/s, 1 m/s²)
+    %          | 'uni' (Unicycle, 1 m/s, 2 rad/s, starting faced at its goal)
     %   seed : random seed for the small start offsets that break symmetry
     %
     %   swap     — 8 agents on a circle of radius 5 m swap to the opposite side.
@@ -43,6 +44,9 @@ function sc = make_scene(name, kind, seed)
     for i = 1:N
         if strcmp(kind, 'si')
             agents{i} = Agent(i, P0(:, i), SingleIntegrator(1.0));
+        elseif strcmp(kind, 'uni')
+            h = atan2(G(2, i) - P0(2, i), G(1, i) - P0(1, i));
+            agents{i} = Agent(i, [P0(:, i); h], Unicycle(1.0, 2.0));
         else
             agents{i} = Agent(i, [P0(:, i); 0; 0], DoubleIntegrator(1.0, 1.0));
         end
