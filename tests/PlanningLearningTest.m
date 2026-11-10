@@ -93,5 +93,26 @@ classdef PlanningLearningTest < matlab.unittest.TestCase
             tc.verifySize(X, [2 20]);
             tc.verifyEqual(Y, repmat([0.3; -0.2], 1, 20), 'AbsTol', 1e-9);
         end
+
+        function unicycleMpcReachesGoalWithinBounds(tc)
+            swarm = Swarm({Agent(1, [0; 0; pi/2], Unicycle(1, 2))});
+            mpc   = NMPCPlanner([4; 1]);
+            sim   = SimEngine(swarm, Environment([-9 9], [-9 9]), mpc, 0.05, 15);
+            sim.control_period = 0.2;
+            sim.run();
+            tc.verifyEqual(swarm.agents{1}.saturation_count, 0);
+            tc.verifyLessThan(norm(swarm.get_positions() - [4; 1]), 0.2);
+        end
+
+        function qLearningReachesGoalAlone(tc)
+            env   = Environment([-5 5], [-5 5]);
+            swarm = Swarm({Agent(1, [-4; -3], SingleIntegrator(1))});
+            pol   = QLearningPolicy([3; 2], env);
+            pol.train(swarm, 1500);
+            tc.verifyGreaterThan(mean(pol.returns(end-99:end)), mean(pol.returns(1:100)));
+            sim = SimEngine(swarm, env, pol, 0.05, 30);
+            sim.run();
+            tc.verifyLessThan(norm(swarm.get_positions() - [3; 2]), 0.2);
+        end
     end
 end
