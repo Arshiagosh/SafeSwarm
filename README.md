@@ -11,8 +11,8 @@
 <p align="center">
   <img alt="MATLAB" src="https://img.shields.io/badge/MATLAB-R2023b-0076A8">
   <img alt="Optimization Toolbox" src="https://img.shields.io/badge/needs-Optimization%20Toolbox-orange">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-49%20passing-brightgreen">
-  <img alt="Release" src="https://img.shields.io/badge/release-v1.0-blue">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-51%20passing-brightgreen">
+  <img alt="Release" src="https://img.shields.io/badge/release-v1.1-blue">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -54,8 +54,9 @@ planners → tools) and adds what a safety study needs:
   on a digital controller.
 - **Uncertainty and faults**: sensor noise, lossy and delayed messages that the decentralised
   filter really acts on, faulty robots, and a seeded Monte Carlo runner.
-- **Planning and learning**: a distributed nonlinear MPC planner and a Gaussian-process model of
-  an unknown disturbance that corrects and tightens the filter.
+- **Planning and learning**: a distributed nonlinear MPC planner, a Gaussian-process model of
+  an unknown disturbance that corrects and tightens the filter, and a learned (Q-learning) policy
+  with the filter on top.
 - **A ROS 2 bridge**: the filter (or any behaviour) runs as a node between controllers and robots.
 - **Benchmarks** that write `results.json` and every figure in this README from a script, and
   one command, `safeswarm_bench`, to rerun them.
@@ -200,6 +201,28 @@ integrator made no contact even without a model. No robot ended within 0.2 m of 
 experiment, because the go-to-goal controller has a steady offset in the wind; that is the nominal
 controller, not the filter.
 
+**Unicycles** (`e4c_unicycle_mpc.m`, swap and crossing, 5 seeds, 5 Hz). The MPC also plans for
+unicycles, with an exact arc rollout and finite-difference gradients. On its own it made contact in
+5 of 5 swap runs and 3 of 5 crossing runs. With the decentralised filter on top, and with the
+centralised filter on go-to-goal, there was no contact, but robots often stopped short of their
+goals (on average 0 of 8 in the swap, and 2.6 and 6.4 of 8 in the crossing): the filter acts on a point 0.2 m ahead of each robot and so asks for 1.05 m between those
+points, more than the 1 m between neighbouring crossing goals, and the swap deadlocked. One MPC
+call for eight unicycles took 33 to 97 ms (up to 132 ms with the filter).
+
+### E5: a learned policy with a safety filter on top
+
+<p align="center">
+  <img src="figures/e5_rl.png" width="90%" alt="Contact rate and closest approach of learned policies with and without the filter">
+</p>
+
+`e5_rl_shield.m`: each of the eight crossing robots learns its own tabular Q-learning policy alone
+(`learning/QLearningPolicy.m`, independent Q-learning on a 1 m grid, 5000 episodes), so the policies
+know nothing about each other. Run together for 10 seeds, the learned policies made contact in
+every run (median closest approach 0.030 m). With the centralised or the decentralised CBF filter
+on top there was no contact in any run, and on average 7.2 and 7.0 of the 8 robots reached their
+goals (7.7 without the filter), taking about 3 to 4 s longer. The policy is deliberately simple; the
+point is that the filter does not care where the nominal command comes from.
+
 ### ROS 2: the filter as a node
 
 <p align="center">
@@ -226,7 +249,7 @@ startup                                  % adds everything to the path
 safeswarm_bench('quick')                 % tests + E1 + the swap GIF, a few minutes
 safeswarm_bench('full')                  % every experiment (hours: Monte Carlo and MPC runs)
 run('scenarios/scenario_swap_cbf.m')     % swap with and without the filter, prints the closest approach
-run('tests/run_tests.m')                 % 49 unit tests
+run('tests/run_tests.m')                 % 51 unit tests
 run('experiments/e1_benchmarks.m')       % E1 table, figures and swap GIF (a few minutes)
 run('experiments/e2_sampled_sweep.m')    % E2 sweep (takes longer: 2 ms steps)
 run('experiments/e3a_noise.m')           % E3 Monte Carlo sweeps (each takes a while)
@@ -234,6 +257,8 @@ run('experiments/e3b_comm.m')
 run('experiments/e3c_faults.m')
 run('experiments/e4a_mpc_vs_cbf.m')      % E4 (MPC runs take a while)
 run('experiments/e4b_gp_residual.m')
+run('experiments/e4c_unicycle_mpc.m')
+run('experiments/e5_rl_shield.m')
 run('ros2/demo_ros2_swap.m')             % needs the ROS Toolbox
 ```
 
@@ -276,11 +301,12 @@ planners/       AStar, RRT, PotentialField
 safety/         SafetyFilter (CBF-QP, centralised and decentralised)
 uncertainty/    NoisyObservation, FaultInjector, MonteCarloRunner
 mpc/            NMPCPlanner (distributed NMPC), GPResidual, FunctionResidual
+learning/       QLearningPolicy (independent tabular Q-learning)
 ros2/           BehaviourNode, TopicCommand, SimRobotsNode, RosTopics, demo_ros2_swap.m
 tools/          MetricsAnalyzer, ExperimentRunner, ParamSweep, PublicationPlot
 visualization/  SwarmVisualizer (with GIF export)
 scenarios/      runnable examples
-experiments/    E1 to E4; each writes figures/ and results.json
+experiments/    E1 to E5; each writes figures/ and results.json
 tests/          matlab.unittest suites, run_tests.m, run_all_scenarios.m
 docs/           SAFETY.md, ARCHITECTURE.md
 safeswarm_bench.m   one command for tests and experiments
@@ -288,8 +314,7 @@ safeswarm_bench.m   one command for tests and experiments
 
 ## Changes from SwarmSim
 
-Besides the new parts above, porting the core turned up a few things that are fixed here
-(SwarmSim itself is unchanged):
+Besides the new parts above, porting the core turned up a few things that are fixed here:
 
 - `PathFollowing` could pick a waypoint behind the robot and turn it around.
 - `VirtualStructure` advanced its centre by a hard-coded 0.05 s per call (only right for
@@ -305,7 +330,7 @@ Besides the new parts above, porting the core turned up a few things that are fi
 - The scenes are small (6 to 8 robots). E1 and E2 are single seeded runs; E3 uses 10 seeds per
   setting, which shows trends but gives wide intervals.
 - The noise and delay results use the filter as it is; nothing in it accounts for noise or delay.
-- The MPC planner works for single and double integrators only, not the unicycle.
+- For unicycles the filter's look-ahead point makes it conservative (see E4).
 
 Next: a Python port in `python/` of this repository, checked against the MATLAB results.
 

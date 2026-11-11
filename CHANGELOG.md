@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 (2026-11-11)
+
+- NMPCPlanner plans for unicycles too (exact arc rollout, finite-difference gradients).
+- learning/QLearningPolicy: independent tabular Q-learning baseline for single integrators.
+- Experiments E4c (unicycle MPC) and E5 (learned policy with the CBF filter on top); 51 unit tests.
+
 ## 1.0.0 (2026-11-06)
 
 First release.
